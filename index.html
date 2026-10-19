@@ -1,0 +1,1067 @@
+<!-- Chosen Palette: Deep Midnight Cyberpunk & Glassmorphism (Dark Neon Indigo, Cyan, Emerald & Purple accents) -->
+<!-- Application Structure Plan:
+     Designed specifically around 'Sets and Its Types' for students and learners.
+     Structure consists of 4 main interactive modules:
+     1. Types & Definitions Library: Interactive grid of all 14 core set types (Set, Null, Subset, Proper Subset, Finite, Infinite, Universal, Disjoint, Overlapping, Venn Diagram, Union, Intersection, Difference, Complement) with live search and rich detail modals.
+     2. Interactive Venn Visualizer: Canvas-rendered Venn engine demonstrating set relationships and operations dynamically.
+     3. Dynamic Set Relationship & Solver Engine: Real-time calculator that accepts custom set inputs, computes operations, and identifies set relationship types (e.g., Disjoint, Subset, Overlapping).
+     4. Set Types Speed Quiz: Gamified quiz with scoring, streak counters, and immediate feedback on set classification concepts.
+     Audio Engine: Upgraded Tone.js audio with distinct synthesizers for tabs, clicks, modal toggles, correct/incorrect quiz answers, and solver calculations.
+-->
+<!-- Visualization & Content Choices:
+     - Concepts Covered: 14 definitions + examples strictly focused on Sets & Types of Sets.
+     - Canvas Graphics: Interactive HTML5 Canvas for floating ambient particles and real-time Venn rendering (NO SVG used).
+     - Justification: Provides high-aesthetic visual engagement while maintaining strict academic accuracy for set definitions.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Theory & Types - Master Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tone.js for Multi-Sound Effects Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        vibe: {
+                            bg: '#05070d',
+                            card: 'rgba(13, 19, 35, 0.70)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            indigo: '#6366f1',
+                            purple: '#a855f7',
+                            cyan: '#06b6d4',
+                            emerald: '#10b981',
+                            rose: '#f43f5e'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 5s ease-in-out infinite',
+                        'glow': 'glow 3s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%': { opacity: '0.2', filter: 'blur(25px)' },
+                            '100%': { opacity: '0.6', filter: 'blur(40px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #05070d;
+            color: #f3f4f6;
+            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Glassmorphism Styling */
+        .vibe-glass {
+            background: rgba(13, 19, 35, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        .vibe-glass-hover {
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .vibe-glass-hover:hover {
+            transform: translateY(-5px) scale(1.01);
+            background: rgba(20, 29, 52, 0.80);
+            border-color: rgba(99, 102, 241, 0.45);
+            box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.3);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-gradient-emerald {
+            background: linear-gradient(135deg, #34d399 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05070d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200 relative selection:bg-indigo-500 selection:text-white">
+
+    <!-- Interactive Background Particle Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Dynamic Ambient Glow Orbs -->
+    <div id="glowBlob1" class="fixed top-1/4 -left-20 w-[32rem] h-[32rem] bg-indigo-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow"></div>
+    <div id="glowBlob2" class="fixed bottom-1/4 -right-20 w-[32rem] h-[32rem] bg-purple-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow" style="animation-delay: 2.5s;"></div>
+
+    <!-- Navigation Header -->
+    <nav class="sticky top-0 z-40 vibe-glass border-b border-slate-800/80 px-6 py-4 backdrop-blur-2xl">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('types')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 p-0.5 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <i class="fa-solid fa-layer-group text-indigo-400 text-lg"></i>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-tight text-white font-mono">Set<span class="text-gradient">Types</span></span>
+                    <span class="block text-[10px] font-mono text-slate-400 -mt-1">Interactive Academic Hub</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center space-x-1 bg-slate-950/60 p-1.5 rounded-2xl border border-slate-800/80">
+                <button onclick="switchTab('types')" id="nav-types" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600/30 border border-indigo-500/40 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-shapes text-indigo-400"></i> Types of Sets
+                </button>
+                <button onclick="switchTab('visualizer')" id="nav-visualizer" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-flask text-cyan-400"></i> Venn Diagram Engine
+                </button>
+                <button onclick="switchTab('calculator')" id="nav-calculator" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-purple-400"></i> Set Relations Solver
+                </button>
+                <button onclick="switchTab('game')" id="nav-game" class="nav-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad text-emerald-400"></i> Speed Quiz
+                </button>
+            </div>
+
+            <!-- Header Audio & Settings Control -->
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleAudio()" id="audioToggleBtn" class="w-10 h-10 rounded-xl vibe-glass hover:bg-slate-800/60 flex items-center justify-center text-slate-300 transition-all relative" title="Toggle Sound Engine">
+                    <i id="audioIcon" class="fa-solid fa-volume-xmark text-slate-400"></i>
+                    <span id="audioBadge" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
+                </button>
+                <button onclick="openSettingsModal()" class="w-10 h-10 rounded-xl vibe-glass hover:bg-slate-800/60 flex items-center justify-center text-slate-300 transition-all" title="Aesthetic Settings">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="md:hidden flex items-center justify-around bg-slate-950/90 border-b border-slate-800/80 py-2.5 px-4 z-30 relative">
+        <button onclick="switchTab('types')" class="text-xs font-mono text-slate-300 flex flex-col items-center gap-1">
+            <i class="fa-solid fa-shapes text-indigo-400"></i> Types
+        </button>
+        <button onclick="switchTab('visualizer')" class="text-xs font-mono text-slate-300 flex flex-col items-center gap-1">
+            <i class="fa-solid fa-flask text-cyan-400"></i> Venn
+        </button>
+        <button onclick="switchTab('calculator')" class="text-xs font-mono text-slate-300 flex flex-col items-center gap-1">
+            <i class="fa-solid fa-calculator text-purple-400"></i> Solver
+        </button>
+        <button onclick="switchTab('game')" class="text-xs font-mono text-slate-300 flex flex-col items-center gap-1">
+            <i class="fa-solid fa-gamepad text-emerald-400"></i> Quiz
+        </button>
+    </div>
+
+    <!-- Hero Header -->
+    <header class="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-8 text-center">
+        <span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-mono mb-4 animate-float">
+            <i class="fa-solid fa-graduation-cap"></i> Complete Guide to Sets & Their Types
+        </span>
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight font-sans">
+            Sets & <span class="text-gradient">Their Types</span> Explorer
+        </h1>
+        <p class="max-w-2xl mx-auto text-sm md:text-base text-slate-400 font-light leading-relaxed">
+            Master definitions, subsets, finite & infinite sets, overlapping vs. disjoint sets, universal sets, and fundamental set operations with dynamic audio-enhanced tools.
+        </p>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 pb-20">
+
+        <!-- TAB 1: TYPES & DEFINITIONS LIBRARY -->
+        <section id="tab-types" class="tab-content active">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Catalog of Set Types</h2>
+                    <p class="text-slate-400 text-xs mt-1">14 Core definitions, notations, formulas, and statistical examples.</p>
+                </div>
+                <div class="relative w-full sm:w-72">
+                    <input type="text" id="typeSearch" onkeyup="filterSetTypes()" placeholder="Search set types (e.g., Null, Subset, Disjoint)..." class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-xs text-slate-500"></i>
+                </div>
+            </div>
+
+            <!-- Set Types Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="setTypesGrid">
+                <!-- Cards will be populated by JS for high modularity & quick filtering -->
+            </div>
+        </section>
+
+        <!-- TAB 2: INTERACTIVE VENN ENGINE -->
+        <section id="tab-visualizer" class="tab-content">
+            <div class="vibe-glass rounded-3xl p-6 sm:p-8 border border-slate-800">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    
+                    <!-- Controls Column -->
+                    <div class="lg:col-span-5 space-y-6">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono">
+                            <i class="fa-solid fa-flask"></i> Interactive Visualizer
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Venn Diagram Engine</h2>
+                        <p class="text-slate-400 text-xs leading-relaxed">
+                            Select a set operation or relationship type below to observe real-time highlighted regions and logic set equations.
+                        </p>
+
+                        <!-- Operation Buttons -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="setVennOp('union')" class="venn-btn p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 text-xs font-mono font-semibold text-slate-200 border border-slate-700/50 transition-all flex items-center justify-between">
+                                <span>Union (A ∪ B)</span>
+                                <i class="fa-solid fa-layer-group text-indigo-400"></i>
+                            </button>
+                            <button onclick="setVennOp('intersect')" class="venn-btn p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 text-xs font-mono font-semibold text-slate-200 border border-slate-700/50 transition-all flex items-center justify-between">
+                                <span>Intersection (A ∩ B)</span>
+                                <i class="fa-solid fa-circle-dot text-cyan-400"></i>
+                            </button>
+                            <button onclick="setVennOp('diffA')" class="venn-btn p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 text-xs font-mono font-semibold text-slate-200 border border-slate-700/50 transition-all flex items-center justify-between">
+                                <span>Difference (A - B)</span>
+                                <i class="fa-solid fa-circle-minus text-purple-400"></i>
+                            </button>
+                            <button onclick="setVennOp('disjoint')" class="venn-btn p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 text-xs font-mono font-semibold text-slate-200 border border-slate-700/50 transition-all flex items-center justify-between">
+                                <span>Disjoint Sets</span>
+                                <i class="fa-solid fa-arrows-left-right text-rose-400"></i>
+                            </button>
+                            <button onclick="setVennOp('subset')" class="venn-btn p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 text-xs font-mono font-semibold text-slate-200 border border-slate-700/50 transition-all flex items-center justify-between">
+                                <span>Subset (A ⊆ B)</span>
+                                <i class="fa-solid fa-circle-nodes text-emerald-400"></i>
+                            </button>
+                            <button onclick="setVennOp('complement')" class="venn-btn p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 text-xs font-mono font-semibold text-slate-200 border border-slate-700/50 transition-all flex items-center justify-between">
+                                <span>Complement (Aᶜ)</span>
+                                <i class="fa-solid fa-sun text-yellow-400"></i>
+                            </button>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800/90 space-y-2">
+                            <span class="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">Mathematical Formula & Meaning</span>
+                            <p id="vennFormula" class="text-sm font-mono text-cyan-300 font-semibold">A ∪ B = { x | x ∈ A or x ∈ B }</p>
+                            <p id="vennDesc" class="text-xs text-slate-400 leading-relaxed">Combines all unique elements present in set A, set B, or both sets.</p>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Interactive Display -->
+                    <div class="lg:col-span-7 flex flex-col items-center justify-center">
+                        <div class="w-full h-80 sm:h-96 bg-slate-950/90 rounded-2xl border border-slate-800/90 flex items-center justify-center p-4 relative shadow-2xl overflow-hidden">
+                            <canvas id="vennCanvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: SET RELATIONS SOLVER & CALCULATOR -->
+        <section id="tab-calculator" class="tab-content">
+            <div class="vibe-glass rounded-3xl p-6 sm:p-8 border border-slate-800 max-w-4xl mx-auto space-y-8">
+                <div class="text-center space-y-2">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono">
+                        <i class="fa-solid fa-calculator"></i> Custom Inputs Engine
+                    </span>
+                    <h2 class="text-3xl font-extrabold text-white tracking-tight">Real-Time Set Relations Solver</h2>
+                    <p class="text-slate-400 text-xs">Enter elements separated by commas to evaluate operations and automatically classify set types.</p>
+                </div>
+
+                <!-- Input Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-xs font-mono text-indigo-300 block">Universal Set U:</label>
+                        <input type="text" id="inputSetU" value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10" oninput="calculateCustomSets()" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-mono text-cyan-300 block">Set A Elements:</label>
+                        <input type="text" id="inputSetA" value="1, 2, 3, 4, 5" oninput="calculateCustomSets()" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-mono text-purple-300 block">Set B Elements:</label>
+                        <input type="text" id="inputSetB" value="4, 5, 6, 7, 8" oninput="calculateCustomSets()" class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-white font-mono focus:outline-none focus:border-purple-500">
+                    </div>
+                </div>
+
+                <!-- Detected Set Relationship Badge -->
+                <div class="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-purple-950/60 to-slate-950/80 border border-indigo-500/30 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-mono text-indigo-300 uppercase tracking-widest block">Relationship Type Detected:</span>
+                        <h4 id="outRelationType" class="text-base font-bold text-white mt-0.5">Overlapping Sets</h4>
+                    </div>
+                    <span id="relationBadge" class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 font-mono text-xs border border-indigo-500/30">Shared Elements Present</span>
+                </div>
+
+                <!-- Calculated Output Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <span class="text-[11px] font-mono text-slate-500 block">Union (A ∪ B)</span>
+                        <span id="outUnion" class="text-sm font-mono text-indigo-300 font-semibold">{ 1, 2, 3, 4, 5, 6, 7, 8 }</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <span class="text-[11px] font-mono text-slate-500 block">Intersection (A ∩ B)</span>
+                        <span id="outIntersect" class="text-sm font-mono text-cyan-300 font-semibold">{ 4, 5 }</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <span class="text-[11px] font-mono text-slate-500 block">Difference (A - B)</span>
+                        <span id="outDiffA" class="text-sm font-mono text-purple-300 font-semibold">{ 1, 2, 3 }</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <span class="text-[11px] font-mono text-slate-500 block">Difference (B - A)</span>
+                        <span id="outDiffB" class="text-sm font-mono text-emerald-300 font-semibold">{ 6, 7, 8 }</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <span class="text-[11px] font-mono text-slate-500 block">Complement of A (Aᶜ = U - A)</span>
+                        <span id="outCompA" class="text-sm font-mono text-rose-300 font-semibold">{ 6, 7, 8, 9, 10 }</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+                        <span class="text-[11px] font-mono text-slate-500 block">Cardinalities & Subsets</span>
+                        <span id="outCardinality" class="text-sm font-mono text-yellow-300 font-semibold">|A|=5, |B|=5, Power Set |P(A)|=32</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: SPEED QUIZ CHALLENGE -->
+        <section id="tab-game" class="tab-content">
+            <div class="vibe-glass rounded-3xl p-6 sm:p-8 border border-slate-800 max-w-2xl mx-auto text-center space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                    <span class="text-xs font-mono text-slate-400">Set Types Mastery Challenge</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs font-mono text-emerald-400 font-bold" id="quizStreak"><i class="fa-solid fa-fire text-amber-500"></i> Streak: 0</span>
+                        <span class="text-xs font-mono text-indigo-400 font-bold" id="quizScore">Score: 0</span>
+                    </div>
+                </div>
+
+                <div class="py-4 space-y-2">
+                    <span id="quizCategory" class="text-[11px] font-mono text-indigo-300 uppercase tracking-widest block">Topic: Classification</span>
+                    <h3 id="quizQuestion" class="text-lg sm:text-xl font-bold text-white font-sans leading-snug">Question text goes here...</h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="quizOptions">
+                    <!-- Dynamic Options Inserted via JS -->
+                </div>
+
+                <div id="quizFeedback" class="h-6 text-xs font-mono font-semibold transition-all"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Settings & Aesthetics Slide Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden transition-opacity flex justify-end">
+        <div class="w-full max-w-md bg-slate-900 border-l border-slate-800 h-full p-6 space-y-6 overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i> Audio & Visual Customizer
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- Accent Color Theme Picker -->
+            <div class="space-y-3">
+                <label class="text-xs font-mono text-slate-400 block">Ambient Glow Palette:</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setThemeAccent('indigo')" class="p-3 rounded-xl bg-indigo-600/20 border border-indigo-500/50 text-xs font-mono text-indigo-300 hover:bg-indigo-600/30">Indigo Cyber</button>
+                    <button onclick="setThemeAccent('cyan')" class="p-3 rounded-xl bg-cyan-600/20 border border-cyan-500/50 text-xs font-mono text-cyan-300 hover:bg-cyan-600/30">Cyan Aurora</button>
+                    <button onclick="setThemeAccent('emerald')" class="p-3 rounded-xl bg-emerald-600/20 border border-emerald-500/50 text-xs font-mono text-emerald-300 hover:bg-emerald-600/30">Emerald Matrix</button>
+                    <button onclick="setThemeAccent('purple')" class="p-3 rounded-xl bg-purple-600/20 border border-purple-500/50 text-xs font-mono text-purple-300 hover:bg-purple-600/30">Purple Nebula</button>
+                </div>
+            </div>
+
+            <!-- Background Particle Density -->
+            <div class="space-y-3">
+                <div class="flex justify-between text-xs font-mono text-slate-400">
+                    <span>Particle Density:</span>
+                    <span id="densityVal">65</span>
+                </div>
+                <input type="range" id="particleDensity" min="20" max="150" value="65" oninput="updateParticleCount(this.value)" class="w-full accent-indigo-500">
+            </div>
+
+            <!-- Audio Master Toggle -->
+            <div class="flex items-center justify-between py-3 border-t border-slate-800">
+                <div>
+                    <span class="text-xs font-mono text-slate-200 block">Tone.js Sound FX Engine</span>
+                    <span class="text-[10px] text-slate-500">Polyphonic synths, tab clicks & result chimes</span>
+                </div>
+                <button onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 border border-indigo-500/40 text-xs font-mono text-indigo-300">Toggle On/Off</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Concept Modal -->
+    <div id="articleModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-6">
+        <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 relative max-h-[85vh] overflow-y-auto">
+            <button onclick="closeArticleModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex items-center gap-3">
+                <span id="modalSymbol" class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center font-mono font-bold text-indigo-300"></span>
+                <div>
+                    <h3 id="modalTitle" class="text-xl sm:text-2xl font-bold text-white font-sans">Set Concept</h3>
+                    <span id="modalCategory" class="text-[11px] font-mono text-slate-400">Classification</span>
+                </div>
+            </div>
+            <div id="modalBody" class="text-xs sm:text-sm text-slate-300 space-y-4 leading-relaxed font-sans border-t border-slate-800/80 pt-4"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Engine -->
+    <script>
+        // 14 Core Set Types Database
+        const setTypesData = [
+            {
+                id: 'set',
+                num: '01',
+                title: '1. Set',
+                symbol: 'A, B',
+                category: 'Fundamental',
+                shortDesc: 'A well-defined and distinct collection of objects or numbers.',
+                example: 'A = {2, 4, 6, 8}',
+                fullText: 'A <strong>Set</strong> is any well-defined collection of distinct elements. "Well-defined" means there is a clear rule to determine whether an element belongs to the set or not.'
+            },
+            {
+                id: 'null-set',
+                num: '02',
+                title: '2. Null Set (Empty Set)',
+                symbol: '∅ or {}',
+                category: 'Special Set',
+                shortDesc: 'A set that contains no elements at all.',
+                example: 'Odd numbers divisible by 2 = ∅',
+                fullText: 'A <strong>Null or Empty Set</strong> has a cardinality of 0. It is a subset of every set.'
+            },
+            {
+                id: 'subset',
+                num: '03',
+                title: '3. Subset',
+                symbol: 'A ⊆ B',
+                category: 'Relationship',
+                shortDesc: 'A set where every element is contained within another larger set.',
+                example: 'If A={1,2} & B={1,2,3}, then A ⊆ B',
+                fullText: 'Set A is a <strong>Subset</strong> of B if every element of A is also in B. Every set is a subset of itself.'
+            },
+            {
+                id: 'proper-subset',
+                num: '04',
+                title: '4. Proper Subset',
+                symbol: 'A ⊂ B',
+                category: 'Relationship',
+                shortDesc: 'A subset containing some, but NOT all elements of the parent set.',
+                example: 'If A={3,4} & B={3,4,5}, then A ⊂ B',
+                fullText: 'A <strong>Proper Subset</strong> requires that set A is a subset of B, but A is NOT equal to B (B has at least one extra element).'
+            },
+            {
+                id: 'finite-set',
+                num: '05',
+                title: '5. Finite Set',
+                symbol: 'n(A) = k',
+                category: 'Classification',
+                shortDesc: 'A set containing a limited, countable number of elements.',
+                example: 'Days of the week: n(C) = 7',
+                fullText: 'A <strong>Finite Set</strong> has a cardinal number n(A) that is a natural number, meaning element counting comes to a definite end.'
+            },
+            {
+                id: 'infinite-set',
+                num: '06',
+                title: '6. Infinite Set',
+                symbol: 'n(A) = ∞',
+                category: 'Classification',
+                shortDesc: 'A set containing an unlimited or endless number of elements.',
+                example: 'Natural Numbers N = {1, 2, 3, 4, ...}',
+                fullText: 'An <strong>Infinite Set</strong> cannot be completely listed or counted because its elements go on without bound.'
+            },
+            {
+                id: 'universal-set',
+                num: '07',
+                title: '7. Universal Set',
+                symbol: 'U or S',
+                category: 'Fundamental',
+                shortDesc: 'The master set containing ALL possible elements under study.',
+                example: 'Single die roll: U = {1, 2, 3, 4, 5, 6}',
+                fullText: 'The <strong>Universal Set</strong> contains all possible objects under consideration in a given statistical context or experiment (Sample Space).'
+            },
+            {
+                id: 'disjoint-sets',
+                num: '08',
+                title: '8. Disjoint Sets',
+                symbol: 'A ∩ B = ∅',
+                category: 'Relationship',
+                shortDesc: 'Two sets that have NO elements in common.',
+                example: 'A={1,3}, B={2,4} ⇒ A ∩ B = ∅',
+                fullText: '<strong>Disjoint Sets</strong> are mutually exclusive; their intersection produces the empty set.'
+            },
+            {
+                id: 'overlapping-sets',
+                num: '09',
+                title: '9. Overlapping Sets',
+                symbol: 'A ∩ B ≠ ∅',
+                category: 'Relationship',
+                shortDesc: 'Sets sharing at least one common element without one being a subset of the other.',
+                example: 'A={1,2,3}, B={3,4,5} ⇒ Shared={3}',
+                fullText: '<strong>Overlapping Sets</strong> share some elements in common while each set retains distinct unique elements.'
+            },
+            {
+                id: 'venn-diagram',
+                num: '10',
+                title: '10. Venn Diagram',
+                symbol: 'Visual Schematic',
+                category: 'Representation',
+                shortDesc: 'A schematic where a rectangle represents U and circles represent sets.',
+                example: 'Rectangle U enclosing circles A & B',
+                fullText: 'A <strong>Venn Diagram</strong> visually portrays set inclusions, intersections, and unions using overlapping geometric figures.'
+            },
+            {
+                id: 'union',
+                num: '11',
+                title: '11. Union of Sets',
+                symbol: 'A ∪ B',
+                category: 'Operation',
+                shortDesc: 'A set containing ALL elements from both sets combined.',
+                example: 'A={1,2}, B={2,3} ⇒ A ∪ B = {1,2,3}',
+                fullText: 'The <strong>Union</strong> of sets A and B contains every element that belongs to A, or B, or both.'
+            },
+            {
+                id: 'intersection',
+                num: '12',
+                title: '12. Intersection of Sets',
+                symbol: 'A ∩ B',
+                category: 'Operation',
+                shortDesc: 'A set containing ONLY elements common to both sets.',
+                example: 'A={1,2,3}, B={2,3,4} ⇒ A ∩ B = {2,3}',
+                fullText: 'The <strong>Intersection</strong> isolates the elements shared simultaneously by both sets.'
+            },
+            {
+                id: 'difference',
+                num: '13',
+                title: '13. Difference of Sets',
+                symbol: 'A - B or A\\B',
+                category: 'Operation',
+                shortDesc: 'Elements belonging to Set A but NOT in Set B.',
+                example: 'A={1,2,3,4}, B={3,4,5} ⇒ A - B = {1,2}',
+                fullText: 'The <strong>Difference</strong> A - B removes any elements of B from set A.'
+            },
+            {
+                id: 'complement',
+                num: '14',
+                title: '14. Complement of Sets',
+                symbol: 'Aᶜ or A\'',
+                category: 'Operation',
+                shortDesc: 'The set of all elements in Universal Set U that are NOT in set A.',
+                example: 'U={1,2,3,4,5}, A={2,4} ⇒ Aᶜ = {1,3,5}',
+                fullText: 'The <strong>Complement</strong> of set A (Aᶜ = U - A) represents everything in the universe outside of A.'
+            }
+        ];
+
+        // Populate Catalog Grid
+        function populateCatalogGrid() {
+            const grid = document.getElementById('setTypesGrid');
+            grid.innerHTML = '';
+            setTypesData.forEach(item => {
+                const card = document.createElement('article');
+                card.className = 'set-type-card vibe-glass vibe-glass-hover rounded-2xl p-6 relative overflow-hidden group flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs font-mono font-bold">${item.num}</span>
+                            <span class="text-[10px] font-mono text-cyan-300 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20">${item.category}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-1 group-hover:text-indigo-300 transition-colors">${item.title}</h3>
+                        <p class="text-slate-400 text-xs leading-relaxed mb-4">${item.shortDesc}</p>
+                    </div>
+                    <div>
+                        <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 mb-4 font-mono text-xs text-indigo-300">
+                            <strong>Ex:</strong> ${item.example}
+                        </div>
+                        <button onclick="openArticleModal('${item.id}')" class="w-full py-2 rounded-xl bg-slate-800/50 hover:bg-indigo-600/30 border border-slate-700/50 hover:border-indigo-500/50 text-xs font-semibold text-slate-200 transition-all flex items-center justify-center gap-2">
+                            <span>Read Full Definition</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterSetTypes() {
+            const query = document.getElementById('typeSearch').value.toLowerCase();
+            document.querySelectorAll('.set-type-card').forEach((card, idx) => {
+                const data = setTypesData[idx];
+                const match = data.title.toLowerCase().includes(query) || 
+                              data.shortDesc.toLowerCase().includes(query) || 
+                              data.category.toLowerCase().includes(query);
+                card.style.display = match ? 'flex' : 'none';
+            });
+        }
+
+        // --- Tone.js Sound FX Engine ---
+        let audioEnabled = false;
+        let clickSynth, tabSynth, correctSynth, wrongSynth, calcSynth;
+
+        function initAudioEngine() {
+            if (clickSynth) return;
+            clickSynth = new Tone.MembraneSynth({ pitchDecay: 0.01, octave: 2, oscillator: { type: 'sine' } }).toDestination();
+            tabSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' } }).toDestination();
+            correctSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sine' } }).toDestination();
+            wrongSynth = new Tone.Synth({ oscillator: { type: 'sawtooth' } }).toDestination();
+            calcSynth = new Tone.PluckSynth().toDestination();
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audioIcon');
+            const badge = document.getElementById('audioBadge');
+            if (audioEnabled) {
+                Tone.start();
+                initAudioEngine();
+                icon.className = 'fa-solid fa-volume-high text-indigo-400';
+                badge.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse';
+                playSfx('correct');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                badge.className = 'absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full';
+            }
+        }
+
+        function playSfx(type) {
+            if (!audioEnabled) return;
+            try {
+                if (type === 'click' && clickSynth) clickSynth.triggerAttackRelease('C4', '16n');
+                if (type === 'tab' && tabSynth) tabSynth.triggerAttackRelease(['E5', 'A5'], '16n');
+                if (type === 'correct' && correctSynth) correctSynth.triggerAttackRelease(['C5', 'E5', 'G5'], '8n');
+                if (type === 'wrong' && wrongSynth) wrongSynth.triggerAttackRelease('C2', '8n');
+                if (type === 'calc' && calcSynth) calcSynth.triggerAttack('G4');
+            } catch (e) {}
+        }
+
+        // Tab Switcher
+        function switchTab(tabId) {
+            playSfx('tab');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600/30', 'border', 'border-indigo-500/40', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-indigo-600/30', 'border', 'border-indigo-500/40', 'text-white');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            if (tabId === 'visualizer') {
+                setTimeout(resizeVennCanvas, 100);
+            }
+        }
+
+        // Canvas Particle Background
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let particleCount = 65;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() { this.reset(); }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = Math.random() * 1.6 + 0.5;
+                this.vx = (Math.random() - 0.5) * 0.35;
+                this.vy = (Math.random() - 0.5) * 0.35;
+                this.alpha = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(168, 85, 247, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+        }
+        initParticles();
+
+        function updateParticleCount(val) {
+            particleCount = parseInt(val);
+            document.getElementById('densityVal').innerText = val;
+            initParticles();
+        }
+
+        function animateBg() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
+        // Venn Diagram Visualizer Engine
+        const vCanvas = document.getElementById('vennCanvas');
+        const vCtx = vCanvas.getContext('2d');
+        let currentVennOp = 'union';
+
+        function resizeVennCanvas() {
+            if (!vCanvas.parentElement) return;
+            const rect = vCanvas.parentElement.getBoundingClientRect();
+            vCanvas.width = rect.width;
+            vCanvas.height = rect.height;
+            drawVenn();
+        }
+        window.addEventListener('resize', resizeVennCanvas);
+
+        function setVennOp(op) {
+            currentVennOp = op;
+            playSfx('click');
+            const formula = document.getElementById('vennFormula');
+            const desc = document.getElementById('vennDesc');
+
+            if (op === 'union') {
+                formula.innerText = 'A ∪ B = { x | x ∈ A or x ∈ B }';
+                desc.innerText = 'Union: Combines all distinct elements belonging to set A, set B, or both.';
+            } else if (op === 'intersect') {
+                formula.innerText = 'A ∩ B = { x | x ∈ A and x ∈ B }';
+                desc.innerText = 'Intersection: Isolates only the shared elements common to both sets.';
+            } else if (op === 'diffA') {
+                formula.innerText = 'A - B = { x | x ∈ A and x ∉ B }';
+                desc.innerText = 'Difference: Elements in Set A with all elements of Set B removed.';
+            } else if (op === 'disjoint') {
+                formula.innerText = 'A ∩ B = ∅ (Disjoint Sets)';
+                desc.innerText = 'Disjoint Sets: Sets that share NO elements in common.';
+            } else if (op === 'subset') {
+                formula.innerText = 'A ⊆ B (Subset)';
+                desc.innerText = 'Subset: Every element of set A is entirely contained inside set B.';
+            } else if (op === 'complement') {
+                formula.innerText = 'Aᶜ = U - A (Complement)';
+                desc.innerText = 'Complement: All elements in Universal Set U that do NOT belong to set A.';
+            }
+            drawVenn();
+        }
+
+        function drawVenn() {
+            if (!vCanvas.width) return;
+            vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
+
+            const centerX = vCanvas.width / 2;
+            const centerY = vCanvas.height / 2;
+            const radius = Math.min(vCanvas.width, vCanvas.height) * 0.25;
+
+            // Universal Box Background for Complement
+            if (currentVennOp === 'complement') {
+                vCtx.fillStyle = 'rgba(234, 179, 8, 0.25)';
+                vCtx.fillRect(20, 20, vCanvas.width - 40, vCanvas.height - 40);
+            }
+
+            vCtx.strokeStyle = '#475569';
+            vCtx.lineWidth = 2;
+            vCtx.strokeRect(20, 20, vCanvas.width - 40, vCanvas.height - 40);
+            vCtx.fillStyle = '#94a3b8';
+            vCtx.font = 'bold 12px "JetBrains Mono"';
+            vCtx.fillText('Universal Set U', 30, 40);
+
+            if (currentVennOp === 'disjoint') {
+                // Disjoint Circles
+                const xA = centerX - radius * 1.1;
+                const xB = centerX + radius * 1.1;
+
+                vCtx.beginPath(); vCtx.arc(xA, centerY, radius, 0, Math.PI * 2);
+                vCtx.fillStyle = 'rgba(99, 102, 241, 0.4)'; vCtx.fill();
+                vCtx.strokeStyle = '#818cf8'; vCtx.stroke();
+
+                vCtx.beginPath(); vCtx.arc(xB, centerY, radius, 0, Math.PI * 2);
+                vCtx.fillStyle = 'rgba(244, 63, 94, 0.4)'; vCtx.fill();
+                vCtx.strokeStyle = '#fb7185'; vCtx.stroke();
+
+                vCtx.fillStyle = '#ffffff';
+                vCtx.fillText('Set A', xA - 15, centerY);
+                vCtx.fillText('Set B', xB - 15, centerY);
+                return;
+            }
+
+            if (currentVennOp === 'subset') {
+                // Nested Circles
+                vCtx.beginPath(); vCtx.arc(centerX, centerY, radius * 1.3, 0, Math.PI * 2);
+                vCtx.fillStyle = 'rgba(168, 85, 247, 0.3)'; vCtx.fill();
+                vCtx.strokeStyle = '#c084fc'; vCtx.stroke();
+
+                vCtx.beginPath(); vCtx.arc(centerX - radius * 0.3, centerY, radius * 0.6, 0, Math.PI * 2);
+                vCtx.fillStyle = 'rgba(16, 185, 129, 0.6)'; vCtx.fill();
+                vCtx.strokeStyle = '#34d399'; vCtx.stroke();
+
+                vCtx.fillStyle = '#ffffff';
+                vCtx.fillText('Set B (Outer)', centerX + radius * 0.3, centerY - radius * 0.8);
+                vCtx.fillText('A ⊆ B', centerX - radius * 0.5, centerY);
+                return;
+            }
+
+            // Standard Overlapping Circles
+            const offset = radius * 0.55;
+            const xA = centerX - offset;
+            const xB = centerX + offset;
+
+            vCtx.save();
+            vCtx.beginPath(); vCtx.arc(xA, centerY, radius, 0, Math.PI * 2);
+            if (currentVennOp === 'union' || currentVennOp === 'diffA') {
+                vCtx.fillStyle = 'rgba(99, 102, 241, 0.5)'; vCtx.fill();
+            }
+
+            vCtx.beginPath(); vCtx.arc(xB, centerY, radius, 0, Math.PI * 2);
+            if (currentVennOp === 'union') {
+                vCtx.fillStyle = 'rgba(168, 85, 247, 0.5)'; vCtx.fill();
+            }
+
+            if (currentVennOp === 'intersect') {
+                vCtx.beginPath(); vCtx.arc(xA, centerY, radius, 0, Math.PI * 2); vCtx.clip();
+                vCtx.beginPath(); vCtx.arc(xB, centerY, radius, 0, Math.PI * 2);
+                vCtx.fillStyle = 'rgba(6, 182, 212, 0.8)'; vCtx.fill();
+            }
+
+            if (currentVennOp === 'diffA') {
+                // Mask out circle B from circle A
+                vCtx.globalCompositeOperation = 'destination-out';
+                vCtx.beginPath(); vCtx.arc(xB, centerY, radius, 0, Math.PI * 2); vCtx.fill();
+                vCtx.globalCompositeOperation = 'source-over';
+            }
+
+            if (currentVennOp === 'complement') {
+                // Clear out circle A from yellow background
+                vCtx.globalCompositeOperation = 'destination-out';
+                vCtx.beginPath(); vCtx.arc(xA, centerY, radius, 0, Math.PI * 2); vCtx.fill();
+                vCtx.globalCompositeOperation = 'source-over';
+            }
+            vCtx.restore();
+
+            // Outlines
+            vCtx.beginPath(); vCtx.arc(xA, centerY, radius, 0, Math.PI * 2);
+            vCtx.strokeStyle = '#818cf8'; vCtx.lineWidth = 2.5; vCtx.stroke();
+
+            vCtx.beginPath(); vCtx.arc(xB, centerY, radius, 0, Math.PI * 2);
+            vCtx.strokeStyle = '#c084fc'; vCtx.lineWidth = 2.5; vCtx.stroke();
+
+            // Labels
+            vCtx.fillStyle = '#ffffff';
+            vCtx.fillText('Set A', xA - radius * 0.4, centerY - radius - 10);
+            vCtx.fillText('Set B', xB + radius * 0.1, centerY - radius - 10);
+        }
+
+        // Custom Calculator & Solver Engine
+        function calculateCustomSets() {
+            playSfx('calc');
+            const parseSet = id => new Set(document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s.length > 0));
+            const setU = parseSet('inputSetU');
+            const setA = parseSet('inputSetA');
+            const setB = parseSet('inputSetB');
+
+            const union = new Set([...setA, ...setB]);
+            const intersect = new Set([...setA].filter(x => setB.has(x)));
+            const diffA = new Set([...setA].filter(x => !setB.has(x)));
+            const diffB = new Set([...setB].filter(x => !setA.has(x)));
+            const compA = new Set([...setU].filter(x => !setA.has(x)));
+
+            const fmt = s => s.size > 0 ? `{ ${Array.from(s).join(', ')} }` : '∅ (Null Set)';
+
+            document.getElementById('outUnion').innerText = fmt(union);
+            document.getElementById('outIntersect').innerText = fmt(intersect);
+            document.getElementById('outDiffA').innerText = fmt(diffA);
+            document.getElementById('outDiffB').innerText = fmt(diffB);
+            document.getElementById('outCompA').innerText = fmt(compA);
+
+            const powerSetSize = Math.pow(2, setA.size);
+            document.getElementById('outCardinality').innerText = `|A|=${setA.size}, |B|=${setB.size}, |P(A)|=${powerSetSize}`;
+
+            // Automatic Relation Detector
+            const relType = document.getElementById('outRelationType');
+            const badge = document.getElementById('relationBadge');
+
+            if (setA.size === 0) {
+                relType.innerText = 'Null Set (Empty Set)';
+                badge.innerText = 'Set A is Null ∅';
+            } else if (intersect.size === 0) {
+                relType.innerText = 'Disjoint Sets';
+                badge.innerText = 'No Elements Shared (A ∩ B = ∅)';
+            } else if (diffA.size === 0 && setA.size < setB.size) {
+                relType.innerText = 'Proper Subset (A ⊂ B)';
+                badge.innerText = 'Set A is fully inside Set B';
+            } else if (diffA.size === 0) {
+                relType.innerText = 'Subset (A ⊆ B)';
+                badge.innerText = 'Set A is contained in Set B';
+            } else {
+                relType.innerText = 'Overlapping Sets';
+                badge.innerText = 'Shared Elements Present';
+            }
+        }
+
+        // Speed Quiz Engine
+        const quizData = [
+            { category: "Set Definitions", q: "Which type of set contains NO elements at all?", opts: ["Universal Set", "Null Set (Empty Set)", "Finite Set", "Proper Subset"], ans: 1 },
+            { category: "Set Relationships", q: "If Set A = {1, 2} and Set B = {3, 4}, what is their relationship?", opts: ["Overlapping Sets", "Disjoint Sets", "Proper Subsets", "Universal Sets"], ans: 1 },
+            { category: "Cardinality", q: "What is the size of the Power Set P(A) for a set with 5 elements?", opts: ["10", "25", "32", "64"], ans: 2 },
+            { category: "Set Operations", q: "What does A - B represent in set theory?", opts: ["Union of A and B", "Elements in A that are NOT in B", "Elements in both A and B", "Complement of U"], ans: 1 },
+            { category: "Subsets", q: "When is A considered a Proper Subset of B (A ⊂ B)?", opts: ["When A = B", "When A ⊆ B and A ≠ B", "When A ∩ B = ∅", "When B is a null set"], ans: 1 }
+        ];
+        let quizIdx = 0;
+        let score = 0;
+        let streak = 0;
+
+        function renderQuiz() {
+            const current = quizData[quizIdx];
+            document.getElementById('quizCategory').innerText = `Topic: ${current.category}`;
+            document.getElementById('quizQuestion').innerText = current.q;
+            const container = document.getElementById('quizOptions');
+            container.innerHTML = '';
+            current.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'p-3 rounded-xl vibe-glass hover:bg-indigo-600/30 border border-slate-700/50 text-xs font-mono text-slate-200 transition-all text-left';
+                btn.innerText = opt;
+                btn.onclick = () => checkQuizAns(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkQuizAns(selectedIdx) {
+            const fb = document.getElementById('quizFeedback');
+            if (selectedIdx === quizData[quizIdx].ans) {
+                score += 10; streak += 1;
+                playSfx('correct');
+                fb.innerText = 'Correct! +10 Points';
+                fb.className = 'h-6 text-xs font-mono text-emerald-400 font-semibold';
+            } else {
+                streak = 0;
+                playSfx('wrong');
+                fb.innerText = 'Incorrect! Try the next question.';
+                fb.className = 'h-6 text-xs font-mono text-rose-400 font-semibold';
+            }
+            document.getElementById('quizScore').innerText = `Score: ${score}`;
+            document.getElementById('quizStreak').innerText = `Streak: ${streak}`;
+            quizIdx = (quizIdx + 1) % quizData.length;
+            setTimeout(() => {
+                fb.innerText = '';
+                renderQuiz();
+            }, 1200);
+        }
+
+        // Modals Logic
+        function openArticleModal(id) {
+            playSfx('click');
+            const data = setTypesData.find(item => item.id === id);
+            if (!data) return;
+            document.getElementById('modalSymbol').innerText = data.symbol;
+            document.getElementById('modalTitle').innerText = data.title;
+            document.getElementById('modalCategory').innerText = `Category: ${data.category}`;
+            document.getElementById('modalBody').innerHTML = `
+                <p>${data.fullText}</p>
+                <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-xs text-indigo-300">
+                    <strong>Standard Notation / Formula:</strong> ${data.symbol}
+                </div>
+                <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-xs text-cyan-300">
+                    <strong>Statistical Example:</strong> ${data.example}
+                </div>
+            `;
+            document.getElementById('articleModal').classList.remove('hidden');
+        }
+
+        function closeArticleModal() {
+            document.getElementById('articleModal').classList.add('hidden');
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function setThemeAccent(theme) {
+            const b1 = document.getElementById('glowBlob1');
+            const b2 = document.getElementById('glowBlob2');
+            if (theme === 'indigo') {
+                b1.className = 'fixed top-1/4 -left-20 w-[32rem] h-[32rem] bg-indigo-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+                b2.className = 'fixed bottom-1/4 -right-20 w-[32rem] h-[32rem] bg-purple-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+            } else if (theme === 'cyan') {
+                b1.className = 'fixed top-1/4 -left-20 w-[32rem] h-[32rem] bg-cyan-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+                b2.className = 'fixed bottom-1/4 -right-20 w-[32rem] h-[32rem] bg-blue-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+            } else if (theme === 'emerald') {
+                b1.className = 'fixed top-1/4 -left-20 w-[32rem] h-[32rem] bg-emerald-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+                b2.className = 'fixed bottom-1/4 -right-20 w-[32rem] h-[32rem] bg-teal-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+            } else if (theme === 'purple') {
+                b1.className = 'fixed top-1/4 -left-20 w-[32rem] h-[32rem] bg-purple-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+                b2.className = 'fixed bottom-1/4 -right-20 w-[32rem] h-[32rem] bg-fuchsia-600/15 rounded-full blur-[150px] pointer-events-none animate-pulse-slow';
+            }
+            playSfx('click');
+        }
+
+        window.onload = function() {
+            populateCatalogGrid();
+            renderQuiz();
+            calculateCustomSets();
+            resizeVennCanvas();
+        };
+    </script>
+</body>
+</html>
